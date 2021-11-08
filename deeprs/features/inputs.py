@@ -1,9 +1,9 @@
 # coding=utf-8
 from .feature_column import DenseFeature, SparseFeature, VarLenSparseFeature
-from ..layers.core import Hash
 from itertools import chain
 from collections import OrderedDict, defaultdict
 from tensorflow.keras.layers import Input, Embedding, Lambda
+from tensorflow.python.keras.layers import Hashing
 from tensorflow.keras.regularizers import l2
 from ..layers.sequence import WeightedSequenceLayer, SequencePoolingLayer
 
@@ -33,14 +33,13 @@ def create_embedding_dict(sparse_feature_columns, varlen_sparse_feature_columns,
     return sparse_embedding
 
 
-def get_embedding_vec_list(embedding_dict, input_dict, sparse_feature_columns, return_feat_list=(), mask_feat_list=()):
+def get_embedding_vec_list(embedding_dict, input_dict, sparse_feature_columns, return_feat_list=()):
     embedding_vec_list = []
     for fg in sparse_feature_columns:
         feature_name = fg.name
         if len(return_feat_list) == 0 or feature_name in return_feat_list:
             if fg.use_hash:
-                lookup_idx = Hash(fg.vocabulary_size, mask_zero=(feature_name in mask_feat_list),
-                                  vocabulary_path=fg.vocabulary_path)(input_dict[feature_name])
+                lookup_idx = Hashing(fg.vocabulary_size)(input_dict[feature_name])
             else:
                 lookup_idx = input_dict[feature_name]
 
@@ -60,16 +59,14 @@ def create_embedding_matrix(feature_columns, l2_reg, prefix="", seq_mask_zero=Tr
 
 
 def embedding_lookup(sparse_embedding_dict, sparse_input_dict, sparse_feature_columns, filter_feature_list=(),
-                     mask_feat_list=(), to_list=False):
+                     to_list=False):
     group_embedding_dict = defaultdict(list)
     for fc in sparse_feature_columns:
         feature_name = fc.name
         embedding_name = fc.embedding_name
         if len(filter_feature_list) == 0 or feature_name in filter_feature_list:
             if fc.use_hash:
-                lookup_idx = Hash(fc.vocabulary_size, mask_zero=(feature_name in mask_feat_list),
-                                  vocabulary_path=fc.vocabulary_path)(
-                    sparse_input_dict[feature_name])
+                lookup_idx = Hashing(fc.vocabulary_size)(sparse_input_dict[feature_name])
             else:
                 lookup_idx = sparse_input_dict[feature_name]
 
@@ -85,8 +82,7 @@ def varlen_embedding_lookup(embedding_dict, sequence_input_dict, varlen_sparse_f
         feature_name = fc.name
         embedding_name = fc.embedding_name
         if fc.use_hash:
-            lookup_idx = Hash(fc.vocabulary_size, mask_zero=True, vocabulary_path=fc.vocabulary_path)(
-                sequence_input_dict[feature_name])
+            lookup_idx = Hashing(fc.vocabulary_size)(sequence_input_dict[feature_name])
         else:
             lookup_idx = sequence_input_dict[feature_name]
         varlen_embedding_vec_dict[feature_name] = embedding_dict[embedding_name](lookup_idx)

@@ -6,14 +6,12 @@ DEFAULT_GROUP_NAME = "default_group"
 
 
 class SparseFeature(namedtuple('SparseFeature',
-                               ['name', 'vocabulary_size', 'embedding_dim', 'use_hash', 'vocabulary_path', 'dtype',
+                               ['name', 'vocabulary_size', 'embedding_dim', 'use_hash', 'dtype',
                                 'embeddings_initializer', 'embedding_name', 'group_name', 'trainable'])):
     __slots__ = ()
 
-    def __new__(cls, name, vocabulary_size, embedding_dim=4, use_hash=False, vocabulary_path=None, dtype="int32",
-                embeddings_initializer=None,
-                embedding_name=None,
-                group_name=DEFAULT_GROUP_NAME, trainable=True):
+    def __new__(cls, name, vocabulary_size, embedding_dim=4, use_hash=False, dtype="int32", embeddings_initializer=None,
+                embedding_name=None, group_name=DEFAULT_GROUP_NAME, trainable=True):
 
         if embedding_dim is None:
             embedding_dim = 6 * int(pow(vocabulary_size, 0.25))
@@ -23,8 +21,8 @@ class SparseFeature(namedtuple('SparseFeature',
         if embedding_name is None:
             embedding_name = name
 
-        return super(SparseFeature, cls).__new__(cls, name, vocabulary_size, embedding_dim, use_hash, vocabulary_path,
-                                                 dtype, embeddings_initializer, embedding_name, group_name, trainable)
+        return super(SparseFeature, cls).__new__(cls, name, vocabulary_size, embedding_dim, use_hash, dtype,
+                                                 embeddings_initializer, embedding_name, group_name, trainable)
 
     def __hash__(self):
         return self.name.__hash__()
@@ -54,10 +52,6 @@ class VarLenSparseFeature(namedtuple('VarLenSparseFeature',
     @property
     def use_hash(self):
         return self.sparse_feature.use_hash
-
-    @property
-    def vocabulary_path(self):
-        return self.sparse_feature.vocabulary_path
 
     @property
     def dtype(self):
