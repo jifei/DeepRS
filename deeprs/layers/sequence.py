@@ -554,12 +554,7 @@ class Transformer(Layer):
 
         outputs = tf.where(tf.equal(key_masks, 1), outputs, paddings, )
         if self.blinding:
-            try:
-                outputs = tf.matrix_set_diag(outputs, tf.ones_like(outputs)[
-                                                      :, :, 0] * (-2 ** 32 + 1))
-            except AttributeError:
-                outputs = tf.compat.v1.matrix_set_diag(outputs, tf.ones_like(outputs)[
-                                                                :, :, 0] * (-2 ** 32 + 1))
+            outputs = tf.linalg.set_diag(outputs, tf.ones_like(outputs)[:, :, 0] * (-2 ** 32 + 1))
 
         outputs -= tf.reduce_max(outputs, axis=-1, keep_dims=True)
         outputs = tf.nn.softmax(outputs)
