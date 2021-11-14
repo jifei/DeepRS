@@ -9,7 +9,7 @@ import sys
 cur_path = os.path.abspath(os.path.dirname(__file__))
 root_path = os.path.split(cur_path)[0]
 sys.path.append(root_path)
-from deeprs.models.rank.deepfm import DeepFM
+from deeprs.models.rank.deepfefm import DeepFEFM
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
@@ -70,16 +70,17 @@ test_model_input = {name: test[name] for name in feature_names}
 # 6.define model
 mirrored_strategy = tf.distribute.MirroredStrategy()
 with mirrored_strategy.scope():
-    model = DeepFM(linear_feature_columns, dnn_feature_columns, dnn_hidden_units=hidden_units, dnn_dropout=dropout,
-                   l2_reg_dnn=l2_reg_dnn)
+    model = DeepFEFM(linear_feature_columns, dnn_feature_columns, dnn_hidden_units=hidden_units, dnn_dropout=dropout,
+                     l2_reg_dnn=l2_reg_dnn)
     model.compile(optimizer=Adam(learning_rate=learning_rate), loss="binary_crossentropy",
                   metrics=['binary_crossentropy', 'AUC'])
 
 # 7.print model summary and plot model
 print(model.summary())
-# from tensorflow.keras.utils import plot_model
-# plot_model(model, to_file='./deepfm_model.png', show_shapes=True)
+from tensorflow.keras.utils import plot_model
 
+plot_model(model, to_file='./deepfefm_model.png', show_shapes=True)
+# exit()
 # 8.train and evaluate
 history = model.fit(train_model_input, train[target].values, batch_size=batch_size, epochs=epochs,
                     validation_split=validation_size)
