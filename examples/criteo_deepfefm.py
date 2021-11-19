@@ -77,9 +77,7 @@ with mirrored_strategy.scope():
 
 # 7.print model summary and plot model
 print(model.summary())
-from tensorflow.keras.utils import plot_model
-
-plot_model(model, to_file='./deepfefm_model.png', show_shapes=True)
+# tf.keras.utils.plot_model(model, to_file='./deepfefm_model.png', show_shapes=True)
 # exit()
 # 8.train and evaluate
 history = model.fit(train_model_input, train[target].values, batch_size=batch_size, epochs=epochs,

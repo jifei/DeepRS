@@ -8,6 +8,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.initializers import Zeros, glorot_normal
+from .activation import activation_layer
 
 
 class DNN(Layer):
@@ -43,8 +44,7 @@ class DNN(Layer):
 
         self.dropout_layers = [tf.keras.layers.Dropout(self.dropout_rate, seed=self.seed + i) for i in
                                range(len(self.hidden_units))]
-
-        self.activation_layers = [tf.keras.layers.Activation(self.activation) for _ in range(len(self.hidden_units))]
+        self.activation_layers = [activation_layer(self.activation) for _ in range(len(self.hidden_units))]
 
         super(DNN, self).build(input_shape)
 

@@ -243,8 +243,8 @@ class AttentionSequencePoolingLayer(Layer):
 
         if self.supports_masking:
             if mask is None:
-                raise ValueError(
-                    "When supports_masking=True,input must support masking")
+                print(mask)
+                raise ValueError("When supports_masking=True,inputs must support masking")
             queries, keys = inputs
             key_masks = tf.expand_dims(mask[-1], axis=1)
 
@@ -254,8 +254,10 @@ class AttentionSequencePoolingLayer(Layer):
             hist_len = keys.get_shape()[1]
             key_masks = tf.sequence_mask(keys_length, hist_len)
 
+        # attention score (B,T,1)
         attention_score = self.local_att([queries, keys], training=training)
 
+        #  reshape (B,T,1)-> (B, 1, T)
         outputs = tf.transpose(attention_score, (0, 2, 1))
 
         if self.weight_normalization:
@@ -265,16 +267,15 @@ class AttentionSequencePoolingLayer(Layer):
 
         outputs = tf.where(key_masks, outputs, paddings)
 
+        # softmax normalization
         if self.weight_normalization:
             outputs = tf.nn.softmax(outputs)
 
+        # weighted sum
         if not self.return_score:
-            outputs = tf.matmul(outputs, keys)
+            outputs = tf.matmul(outputs, keys)  # (B,1,T),(B,T,H)->(B,1,H)
 
-        if tf.__version__ < '1.13.0':
-            outputs._uses_learning_phase = attention_score._uses_learning_phase
-        else:
-            outputs._uses_learning_phase = training is not None
+        outputs._uses_learning_phase = training is not None
 
         return outputs
 

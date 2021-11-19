@@ -1,6 +1,6 @@
 # coding=utf-8
 import tensorflow as tf
-from tensorflow.keras.layers import Layer
+from tensorflow.keras.layers import Layer, Dense
 from tensorflow.keras.initializers import glorot_normal, Zeros
 from tensorflow.keras import backend as K
 from .dnn import DNN
@@ -74,16 +74,25 @@ class LocalActivationUnit(Layer):
 
     def call(self, inputs, training=None, **kwargs):
 
-        query, keys = inputs
+        query, keys = inputs  # (B,1,H),(B,T,H)
 
         keys_len = keys.get_shape()[1]
-        queries = K.repeat_elements(query, keys_len, 1)
 
+        # repeat query, keep queries and keys with the same shape
+
+        queries = K.repeat_elements(query, keys_len, 1)  # (B,1,H)->(B,T,H)
+
+        # queries = tf.tile(query, [1, keys_len])  # (B, T * H),
+        # queries = tf.reshape(queries, tf.shape(keys))  # (B, T * H)->(B,T,H)
+
+        # more operations to capture the relationship between the behavior items and the candidate item
         att_input = tf.concat(
             [queries, keys, queries - keys, queries * keys], axis=-1)
 
+        # mlp
         att_out = self.dnn(att_input, training=training)
 
+        # Dense(1)(att_out)  (B,T,H)->(B,T,1)
         attention_score = tf.nn.bias_add(tf.tensordot(att_out, self.kernel, axes=(-1, 0)), self.bias)
 
         return attention_score
