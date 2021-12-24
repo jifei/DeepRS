@@ -40,13 +40,14 @@ class SequencePoolingLayer(Layer):
 
     def __init__(self, mode='mean', supports_masking=False, **kwargs):
 
-        if mode not in ['sum', 'mean', 'max']:
-            raise ValueError("mode must be sum or mean")
+        if mode not in ['sum', 'mean', 'max','flatten']:
+            raise ValueError("mode must be sum 、 mean 、 max or flatten")
         self.mode = mode
         self.eps = tf.constant(1e-8, tf.float32)
         super(SequencePoolingLayer, self).__init__(**kwargs)
 
         self.supports_masking = supports_masking
+        self.flatten = tf.keras.layers.Flatten()
 
     def build(self, input_shape):
         if not self.supports_masking:
@@ -61,7 +62,7 @@ class SequencePoolingLayer(Layer):
                     "When supports_masking=True,input must support masking")
             uiseq_embed_list = seq_value_len_list
             mask = tf.cast(mask, tf.float32)  # tf.to_float(mask)
-            user_behavior_length = tf.reduce_sum(mask, axis=-1, keep_dims=True)
+            user_behavior_length = tf.reduce_sum(mask, axis=-1, keepdims=True)
             mask = tf.expand_dims(mask, axis=2)
         else:
             uiseq_embed_list, user_behavior_length = seq_value_len_list
@@ -76,9 +77,12 @@ class SequencePoolingLayer(Layer):
 
         if self.mode == "max":
             hist = uiseq_embed_list - (1 - mask) * 1e9
-            return tf.reduce_max(hist, 1, keep_dims=True)
+            return tf.reduce_max(hist, 1, keepdims=True)
+        if self.mode == 'flatten':
+            return self.flatten(uiseq_embed_list)
 
-        hist = tf.reduce_sum(uiseq_embed_list * mask, 1, keep_dims=False)
+
+        hist = tf.reduce_sum(uiseq_embed_list * mask, 1, keepdims=False)
 
         if self.mode == "mean":
             hist = tf.divide(hist, tf.cast(user_behavior_length, tf.float32) + self.eps)
@@ -557,7 +561,7 @@ class Transformer(Layer):
         if self.blinding:
             outputs = tf.linalg.set_diag(outputs, tf.ones_like(outputs)[:, :, 0] * (-2 ** 32 + 1))
 
-        outputs -= tf.reduce_max(outputs, axis=-1, keep_dims=True)
+        outputs -= tf.reduce_max(outputs, axis=-1, keepdims=True)
         outputs = tf.nn.softmax(outputs)
         query_masks = tf.tile(query_masks, [self.head_num, 1])  # (h*N, T_q)
         # (h*N, T_q, T_k)
@@ -588,9 +592,9 @@ class Transformer(Layer):
                 result = self.ln(result)
 
         if self.output_type == "mean":
-            return tf.reduce_mean(result, axis=1, keep_dims=True)
+            return tf.reduce_mean(result, axis=1, keepdims=True)
         elif self.output_type == "sum":
-            return tf.reduce_sum(result, axis=1, keep_dims=True)
+            return tf.reduce_sum(result, axis=1, keepdims=True)
         else:
             return result
 
