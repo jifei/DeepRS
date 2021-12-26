@@ -32,7 +32,6 @@ def create_embedding_dict(sparse_feature_columns, varlen_sparse_feature_columns,
             emb.trainable = feat.trainable
             sparse_embedding[feat.embedding_name] = emb
 
-
     return sparse_embedding
 
 
@@ -105,16 +104,21 @@ def get_varlen_pooling_list(embedding_dict, features, varlen_sparse_feature_colu
                     [embedding_dict[feature_name], features[feature_length_name], features[fc.weight_name]])
             else:
                 seq_input = embedding_dict[feature_name]
-            vec = SequencePoolingLayer(combiner, supports_masking=False)(
-                [seq_input, features[feature_length_name]])
+            if combiner:
+                vec = SequencePoolingLayer(combiner, supports_masking=False)([seq_input, features[feature_length_name]])
+            else:
+                vec =seq_input
         else:
             if fc.weight_name is not None:
                 seq_input = WeightedSequenceLayer(weight_normalization=fc.weight_norm, supports_masking=True)(
                     [embedding_dict[feature_name], features[fc.weight_name]])
             else:
                 seq_input = embedding_dict[feature_name]
-            vec = SequencePoolingLayer(combiner, supports_masking=True)(
-                seq_input)
+
+            if combiner:
+                vec = SequencePoolingLayer(combiner, supports_masking=True)(seq_input)
+            else:
+                vec = seq_input
         pooling_vec_list[fc.group_name].append(vec)
     if to_list:
         return chain.from_iterable(pooling_vec_list.values())

@@ -40,7 +40,7 @@ class SequencePoolingLayer(Layer):
 
     def __init__(self, mode='mean', supports_masking=False, **kwargs):
 
-        if mode not in ['sum', 'mean', 'max','flatten']:
+        if mode not in [None,'sum', 'mean', 'max','flatten']:
             raise ValueError("mode must be sum 、 mean 、 max or flatten")
         self.mode = mode
         self.eps = tf.constant(1e-8, tf.float32)
@@ -74,11 +74,10 @@ class SequencePoolingLayer(Layer):
         embedding_size = uiseq_embed_list.shape[-1]
 
         mask = tf.tile(mask, [1, 1, embedding_size])
-
         if self.mode == "max":
             hist = uiseq_embed_list - (1 - mask) * 1e9
             return tf.reduce_max(hist, 1, keepdims=True)
-        if self.mode == 'flatten':
+        elif self.mode == 'flatten':
             return self.flatten(uiseq_embed_list)
 
 
